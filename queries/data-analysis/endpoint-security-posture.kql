@@ -1,0 +1,41 @@
+// Endpoint Security Posture
+// Description: Provides an overview of endpoint security health and coverage
+// Use Case: Security posture assessment and compliance reporting
+// Data Source: SentinelOne Agent Status and Events
+
+let ActiveDevices = ProcessEvents
+| where TimeGenerated > ago(24h)
+| summarize LastActivity=max(TimeGenerated) by DeviceName
+| where LastActivity > ago(1h)
+| count;
+
+let ThreatCount = ThreatEvents
+| where TimeGenerated > ago(7d)
+| summarize TotalThreats=count() by DeviceName;
+
+let VulnerableProcesses = ProcessEvents
+| where TimeGenerated > ago(24h)
+| where ProcessName has_any ("java.exe", "javaw.exe", "acrobat.exe", "acrord32.exe", "flash")
+| summarize VulnProcessCount=count() by DeviceName;
+
+ProcessEvents
+| where TimeGenerated > ago(24h)
+| summarize 
+    LastSeen=max(TimeGenerated),
+    EventCount=count(),
+    UniqueProcesses=dcount(ProcessName),
+    UniqueUsers=dcount(AccountName)
+    by DeviceName
+| join kind=leftouter (ThreatCount) on DeviceName
+| join kind=leftouter (VulnerableProcesses) on DeviceName
+| extend 
+    TotalThreats = coalesce(TotalThreats, 0),
+    VulnProcessCount = coalesce(VulnProcessCount, 0)
+| extend HealthStatus = case(
+    TotalThreats > 5, "Critical",
+    TotalThreats > 0, "Warning",
+    LastSeen < ago(1h), "Inactive",
+    "Healthy"
+)
+| project DeviceName, LastSeen, EventCount, UniqueProcesses, UniqueUsers, TotalThreats, VulnProcessCount, HealthStatus
+| order by TotalThreats desc, HealthStatus asc

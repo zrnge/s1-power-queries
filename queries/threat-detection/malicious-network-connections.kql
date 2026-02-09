@@ -1,0 +1,23 @@
+// Malicious Network Connections
+// Description: Identifies suspicious outbound network connections to potentially malicious destinations
+// Use Case: Detect command and control (C2) communications
+// Data Source: SentinelOne Network Events
+
+NetworkEvents
+| where TimeGenerated > ago(1h)
+| where ActionType == "ConnectionSuccess"
+| where RemoteIPType == "Public"
+// Filter out common legitimate services
+| where not(RemotePort in (80, 443) and RemoteUrl has_any ("microsoft.com", "windows.com", "office.com", "azure.com"))
+| where RemotePort in (4444, 8080, 8443, 1337, 31337, 6666, 6667, 6668, 6669)
+    or RemoteUrl matches regex @"^([0-9]{1,3}\.){3}[0-9]{1,3}$"  // IP address instead of domain
+    or RemoteUrl has_any (".tk", ".ml", ".ga", ".cf", ".gq")  // Suspicious TLDs
+| extend RiskScore = case(
+    RemotePort in (4444, 31337), 90,
+    RemoteUrl matches regex @"^([0-9]{1,3}\.){3}[0-9]{1,3}$", 70,
+    RemoteUrl has_any (".tk", ".ml", ".ga"), 60,
+    50
+)
+| project TimeGenerated, DeviceName, ProcessName, RemoteIP, RemotePort, RemoteUrl, ConnectionDirection, RiskScore
+| summarize ConnectionCount=count(), FirstSeen=min(TimeGenerated), LastSeen=max(TimeGenerated) by DeviceName, ProcessName, RemoteIP, RemotePort, RiskScore
+| order by RiskScore desc, ConnectionCount desc

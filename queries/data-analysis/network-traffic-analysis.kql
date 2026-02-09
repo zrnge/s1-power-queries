@@ -1,0 +1,26 @@
+// Network Traffic Analysis
+// Description: Analyzes network connection patterns to identify trends and anomalies
+// Use Case: Understanding network behavior and detecting unusual patterns
+// Data Source: SentinelOne Network Events
+
+NetworkEvents
+| where TimeGenerated > ago(24h)
+| where ActionType == "ConnectionSuccess"
+| summarize 
+    ConnectionCount=count(),
+    UniqueDestinations=dcount(RemoteIP),
+    DataTransferred=sum(BytesSent + BytesReceived),
+    AvgBytesPerConnection=avg(BytesSent + BytesReceived)
+    by DeviceName, ProcessName, RemotePort
+| extend 
+    DataTransferredMB = round(DataTransferred / 1024.0 / 1024.0, 2),
+    AvgBytesMB = round(AvgBytesPerConnection / 1024.0 / 1024.0, 2)
+| extend TrafficVolume = case(
+    DataTransferredMB > 1000, "Very High",
+    DataTransferredMB > 100, "High",
+    DataTransferredMB > 10, "Medium",
+    "Low"
+)
+| project DeviceName, ProcessName, RemotePort, ConnectionCount, UniqueDestinations, DataTransferredMB, AvgBytesMB, TrafficVolume
+| order by DataTransferredMB desc
+| take 100

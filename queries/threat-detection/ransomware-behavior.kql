@@ -1,0 +1,23 @@
+// Ransomware Behavior Detection
+// Description: Detects behavioral patterns associated with ransomware activity
+// Use Case: Early detection of ransomware attacks
+// Data Source: SentinelOne File Events and Process Events
+
+FileEvents
+| where TimeGenerated > ago(1h)
+| where ActionType in ("FileCreated", "FileModified", "FileRenamed")
+| where FileName endswith_any (".encrypted", ".locked", ".crypto", ".crypt", ".cerber", ".locky")
+    or FileName matches regex @".*\.(txt|html)$" and FileName has_any ("readme", "howto", "decrypt", "recover")
+| summarize 
+    EncryptedFiles=count(),
+    UniqueExtensions=dcount(FileExtension),
+    AffectedFolders=dcount(FolderPath)
+    by DeviceName, ProcessName, AccountName, bin(TimeGenerated, 5m)
+| where EncryptedFiles > 10 or UniqueExtensions > 5
+| extend Severity = case(
+    EncryptedFiles > 100, "Critical",
+    EncryptedFiles > 50, "High",
+    "Medium"
+)
+| project TimeGenerated, DeviceName, AccountName, ProcessName, EncryptedFiles, UniqueExtensions, AffectedFolders, Severity
+| order by EncryptedFiles desc

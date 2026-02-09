@@ -1,0 +1,23 @@
+// Top Process Activity Summary
+// Description: Provides a summary of the most active processes across the environment
+// Use Case: Baseline understanding and anomaly detection
+// Data Source: SentinelOne Process Events
+
+ProcessEvents
+| where TimeGenerated > ago(24h)
+| summarize 
+    ExecutionCount=count(),
+    UniqueDevices=dcount(DeviceName),
+    UniqueUsers=dcount(AccountName),
+    FirstSeen=min(TimeGenerated),
+    LastSeen=max(TimeGenerated)
+    by ProcessName, ProcessCommandLine
+| extend Frequency = case(
+    ExecutionCount > 10000, "Very High",
+    ExecutionCount > 1000, "High",
+    ExecutionCount > 100, "Medium",
+    "Low"
+)
+| top 100 by ExecutionCount
+| project ProcessName, ProcessCommandLine, ExecutionCount, UniqueDevices, UniqueUsers, Frequency, FirstSeen, LastSeen
+| order by ExecutionCount desc

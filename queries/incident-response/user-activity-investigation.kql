@@ -1,0 +1,28 @@
+// User Activity Investigation
+// Description: Tracks all activities associated with a specific user account
+// Use Case: Investigation of compromised or suspicious user accounts
+// Data Source: All SentinelOne Events
+// Instructions: Replace '<USER_ACCOUNT>' with the actual account name under investigation
+
+let UserToInvestigate = "<USER_ACCOUNT>";
+let InvestigationStart = ago(7d);
+
+union ProcessEvents, NetworkEvents, FileEvents, RegistryEvents
+| where TimeGenerated > InvestigationStart
+| where AccountName == UserToInvestigate
+| summarize 
+    TotalEvents=count(),
+    UniqueDevices=dcount(DeviceName),
+    UniqueProcesses=dcount(ProcessName),
+    UniqueIPs=dcount(RemoteIP),
+    FirstActivity=min(TimeGenerated),
+    LastActivity=max(TimeGenerated),
+    DeviceList=make_set(DeviceName),
+    ProcessList=make_set(ProcessName)
+    by AccountName
+| extend RiskIndicators = case(
+    UniqueDevices > 10, "Multiple Devices",
+    UniqueIPs > 50, "Multiple Remote Connections",
+    ""
+)
+| project AccountName, TotalEvents, UniqueDevices, UniqueProcesses, UniqueIPs, FirstActivity, LastActivity, RiskIndicators, DeviceList, ProcessList

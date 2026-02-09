@@ -1,0 +1,18 @@
+// Lateral Movement Detection
+// Description: Detects potential lateral movement activities using remote execution tools
+// Use Case: Identify attackers moving through the network
+// Data Source: SentinelOne Network and Process Events
+
+ProcessEvents
+| where TimeGenerated > ago(7d)
+| where ProcessName has_any ("psexec.exe", "wmic.exe", "winrs.exe", "sc.exe")
+    or ProcessCommandLine has_any ("invoke-command", "enter-pssession", "at.exe", "schtasks.exe /create /s")
+| join kind=inner (
+    NetworkEvents
+    | where TimeGenerated > ago(7d)
+    | where RemotePort in (445, 135, 139, 3389, 5985, 5986)
+) on DeviceName
+| project TimeGenerated, DeviceName, AccountName, ProcessName, ProcessCommandLine, RemoteIP, RemotePort
+| summarize EventCount=count(), UniqueDestinations=dcount(RemoteIP) by DeviceName, AccountName, ProcessName
+| where UniqueDestinations > 3
+| order by EventCount desc

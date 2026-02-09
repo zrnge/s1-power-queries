@@ -1,0 +1,35 @@
+// Persistence Mechanism Detection
+// Description: Detects common persistence techniques used by malware and attackers
+// Use Case: Identify malware trying to maintain presence on systems
+// Data Source: SentinelOne Registry and File Events
+
+union RegistryEvents, FileEvents
+| where TimeGenerated > ago(24h)
+| where (
+    // Registry persistence
+    RegistryKey has_any (
+        "\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+        "\\Software\\Microsoft\\Windows\\CurrentVersion\\RunOnce",
+        "\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders",
+        "\\Software\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon"
+    )
+    or
+    // Startup folder persistence
+    (ActionType in ("FileCreated", "FileModified") and FolderPath has "\\Startup\\")
+    or
+    // Scheduled task persistence (look for XML task files)
+    (ActionType in ("FileCreated", "FileModified") and FolderPath has "\\Tasks\\" and FileName endswith ".xml")
+    or
+    // Service persistence
+    (RegistryKey has "\\Services\\" and RegistryValueName in ("ImagePath", "ServiceDll"))
+)
+| extend PersistenceType = case(
+    RegistryKey has "\\Run", "Registry Run Key",
+    RegistryKey has "\\Winlogon", "Winlogon Hook",
+    FolderPath has "\\Startup\\", "Startup Folder",
+    FolderPath has "\\Tasks\\", "Scheduled Task",
+    RegistryKey has "\\Services\\", "Windows Service",
+    "Other"
+)
+| project TimeGenerated, DeviceName, AccountName, ProcessName, PersistenceType, RegistryKey, RegistryValueData, FileName, FolderPath
+| order by TimeGenerated desc

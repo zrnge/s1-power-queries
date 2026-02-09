@@ -1,0 +1,41 @@
+// File Hash Investigation
+// Description: Searches for all occurrences of a specific file hash across the environment
+// Use Case: Tracking malware propagation and affected systems
+// Data Source: SentinelOne File and Process Events
+// Instructions: Replace '<FILE_HASH>' with the actual SHA256 hash to investigate
+
+let HashToInvestigate = "<FILE_HASH>";
+let InvestigationPeriod = ago(30d);
+
+union FileEvents, ProcessEvents
+| where TimeGenerated > InvestigationPeriod
+| where SHA256 == HashToInvestigate or SHA1 == HashToInvestigate or MD5 == HashToInvestigate
+| extend EventCategory = case(
+    Type == "ProcessEvents", "Execution",
+    ActionType == "FileCreated", "Created",
+    ActionType == "FileModified", "Modified",
+    ActionType == "FileDeleted", "Deleted",
+    "Other"
+)
+| project 
+    TimeGenerated,
+    DeviceName,
+    AccountName,
+    EventCategory,
+    FileName,
+    FolderPath,
+    ProcessName,
+    ProcessCommandLine,
+    SHA256,
+    SHA1,
+    MD5
+| summarize 
+    EventCount=count(),
+    FirstSeen=min(TimeGenerated),
+    LastSeen=max(TimeGenerated),
+    AffectedDevices=dcount(DeviceName),
+    EventTypes=make_set(EventCategory),
+    FilePaths=make_set(FolderPath)
+    by FileName, SHA256
+| extend SpreadScore = AffectedDevices * 10
+| order by SpreadScore desc, FirstSeen asc

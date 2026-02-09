@@ -1,0 +1,12 @@
+// Suspicious Process Execution Detection
+// Description: Identifies potentially suspicious process executions based on common attack patterns
+// Use Case: Proactive threat hunting for malicious activity
+// Data Source: SentinelOne Process Events
+
+ProcessEvents
+| where TimeGenerated > ago(24h)
+| where ProcessName has_any ("powershell.exe", "cmd.exe", "wscript.exe", "cscript.exe", "mshta.exe")
+| where ProcessCommandLine has_any ("hidden", "bypass", "encodedcommand", "downloadstring", "iex", "invoke-expression")
+| project TimeGenerated, DeviceName, AccountName, ProcessName, ProcessCommandLine, ParentProcessName
+| summarize Count=count(), FirstSeen=min(TimeGenerated), LastSeen=max(TimeGenerated) by DeviceName, AccountName, ProcessName, ProcessCommandLine
+| order by Count desc

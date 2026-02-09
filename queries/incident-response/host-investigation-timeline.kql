@@ -1,0 +1,34 @@
+// Host Investigation Timeline
+// Description: Creates a comprehensive timeline of activities for a specific host
+// Use Case: Incident response and forensic investigation
+// Data Source: All SentinelOne Events
+// Instructions: Replace '<DEVICE_NAME>' with the actual device name under investigation
+
+let DeviceToInvestigate = "<DEVICE_NAME>";
+let InvestigationStart = ago(7d);
+let InvestigationEnd = now();
+
+union ProcessEvents, NetworkEvents, FileEvents, RegistryEvents
+| where TimeGenerated between (InvestigationStart .. InvestigationEnd)
+| where DeviceName == DeviceToInvestigate
+| extend EventType = case(
+    Type == "ProcessEvents", "Process",
+    Type == "NetworkEvents", "Network",
+    Type == "FileEvents", "File",
+    Type == "RegistryEvents", "Registry",
+    "Other"
+)
+| project 
+    TimeGenerated,
+    EventType,
+    ActionType,
+    AccountName,
+    ProcessName,
+    ProcessCommandLine,
+    FileName,
+    FolderPath,
+    RemoteIP,
+    RemotePort,
+    RegistryKey,
+    RegistryValueName
+| order by TimeGenerated asc
