@@ -33,3 +33,9 @@ endpoint.os = "windows" and event.type = "Registry Value Create" and registry.ke
 | columns endpoint.name, registry.keyPath, registry.value, src.process.cmdline, src.process.parent.name, src.process.name, event.type, event.time
 | sort -event.time
 ```
+---
+## Detect unsuccessful login attempts
+```KQL
+event.type = "Login" and event.login.loginIsSuccessful = false and src.process.netConnCount > "30" 
+| columns endpoint.name, endpoint.os, src.process.netConnCount, event.login.loginIsSuccessful, event.login.type, event.type, event.category, event.time
+```
