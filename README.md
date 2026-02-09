@@ -34,6 +34,19 @@ endpoint.os = "windows" and event.type = "Registry Value Create" and registry.ke
 | sort -event.time
 ```
 ---
+## Detect every Registery created by (cmd.exe)
+```KQL
+src.process.name in ("cmd.exe")  and (event.type = "Registry Value Create" or event.type = "Registry Value Modified" or event.type = "Registry Key Create")
+| columns endpoint.name, src.process.cmdline, src.process.parent.name, src.process.name, event.type, event.time
+| sort -event.time
+```
+## Detect every Registery created by (winword.exe > cmd.exe)
+```KQL
+src.process.name in ("cmd.exe") and src.process.parent.name in ("winword.exe") and (event.type = "Registry Value Create" or event.type = "Registry Value Modified" or event.type = "Registry Key Create")
+| columns endpoint.name, src.process.cmdline, src.process.parent.name, src.process.name, event.type, event.time
+| sort -event.time
+```
+---
 ## Detect unsuccessful login attempts
 ```KQL
 event.type = "Login" and event.login.loginIsSuccessful = false and src.process.netConnCount > "30" 
