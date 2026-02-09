@@ -4,6 +4,13 @@ Power Query collection for SentinelOne - KQL queries, data transformations, and 
 
 ---
 
+## Unusual Parent-Child Process Relations
+```KQL
+src.process.name contains:anycase ('winword.exe', 'excel.exe', 'powerpnt.exe', 'outlook.exe') AND tgt.process.name contains:anycase ('powershell.exe', 'cmd.exe', 'wscript.exe')  
+| group total = count() by endpoint.name 
+| filter total > 0
+```
+---
 ## Potential DNS tunneling detected.
 ```KQL
 //Remember to exclude the DNS servers to reduce false positives.
