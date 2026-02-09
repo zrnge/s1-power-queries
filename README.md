@@ -1,6 +1,9 @@
 # SentinelOne Power Queries KQL
+
 Power Query collection for SentinelOne - KQL queries, data transformations, and analysis templates for security operations and threat hunting
+
 ---
+
 ## Potential DNS tunneling detected.
 ```KQL
 //Remember to exclude the DNS servers to reduce false positives.
