@@ -2,7 +2,7 @@
 
 Power Query collection for SentinelOne - KQL queries, data transformations, and analysis templates for security operations and threat hunting
 
-## Unusual Parent-Child Process Relations
+## Suspicious driver load detected
 ```KQL
 driver.loadVerdict = * and !(driver.loadVerdict = 'BENIGN') endpoint.name = * 
 | group total = count() by endpoint.name 
