@@ -1,11 +1,19 @@
 # SentinelOne Power Queries KQL
 Power Query collection for SentinelOne - KQL queries, data transformations, and analysis templates for security operations and threat hunting
 ---
+## Potential DNS tunneling detected.
+```KQL
+//Remember to exclude the DNS servers to reduce false positives.
+event.dns.response matches '[A-Za-z0-9+/]{20,}\.' 
+| group total = count() by endpoint.name ,timestamp = timebucket(timestamp, "1m") 
+| filter total > 50 // change the rate
+```
+---
 ## DDoS Dtection
 ```KQL
 event.dns.request = *
-| group count=count() by endpoint.name   , timestamp = timebucket(timestamp, "1m") 
-| filter  count >= 1000 //change the threshold based on your environment
+| group count=count() by endpoint.name , timestamp = timebucket(timestamp, "1m") 
+| filter  count >= 1000 //change the rate
 ```
 ---
 ## Suspicious Use of rundll32
