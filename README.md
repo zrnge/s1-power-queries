@@ -17,3 +17,13 @@ and tgt.process.cmdline matches "(?i)(javascript|url.dll|ShellExec_RunDLL|htafil
 | let alert = format("Suspicious rundll32 use (%d) on %s  from %s", hits, endpoint.name ,tgt.process.cmdline)
 | columns alert
 ```
+## Encrypted Command - Powershell
+```KQL
+event.type = "Process Creation"
+and tgt.process.cmdline contains "powershell"
+and tgt.process.cmdline matches "(?i)(-enc|-EncodedCommand|frombase64)"
+| group count = count() by endpoint.name 
+| let flag = format("Encoded PowerShell seen %,d times on %s", count, endpoint.name)
+| columns flag
+```
+
