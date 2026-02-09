@@ -26,4 +26,10 @@ and tgt.process.cmdline matches "(?i)(-enc|-EncodedCommand|frombase64)"
 | let flag = format("Encoded PowerShell seen %,d times on %s", count, endpoint.name)
 | columns flag
 ```
-
+---
+## Detect persistence by creating a registry entry in the Run key
+```KQL
+endpoint.os = "windows" and event.type = "Registry Value Create" and registry.keyPath contains "Windows\CurrentVersion\Run" and registry.value = *
+| columns endpoint.name, registry.keyPath, registry.value, src.process.cmdline, src.process.parent.name, src.process.name, event.type, event.time
+| sort -event.time
+```
