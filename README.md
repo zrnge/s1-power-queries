@@ -18,7 +18,7 @@ src.process.name contains:anycase ('winword.exe', 'excel.exe', 'powerpnt.exe', '
 
 ## Potential DNS tunneling detected.
 ```KQL
-//Remember to exclude the DNS servers to reduce false positives.
+//Remember to exclude the DNS servers to reduce false positives. if you have.
 event.dns.response matches '[A-Za-z0-9+/]{20,}\.' 
 | group total = count() by endpoint.name ,timestamp = timebucket(timestamp, "1m") 
 | filter total > 50 // change the rate
