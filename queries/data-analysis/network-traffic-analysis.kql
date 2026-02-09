@@ -9,8 +9,8 @@ NetworkEvents
 | summarize 
     ConnectionCount=count(),
     UniqueDestinations=dcount(RemoteIP),
-    DataTransferred=sum(BytesSent + BytesReceived),
-    AvgBytesPerConnection=avg(BytesSent + BytesReceived)
+    DataTransferred=sum(coalesce(BytesSent, 0) + coalesce(BytesReceived, 0)),
+    AvgBytesPerConnection=avg(coalesce(BytesSent, 0) + coalesce(BytesReceived, 0))
     by DeviceName, ProcessName, RemotePort
 | extend 
     DataTransferredMB = round(DataTransferred / 1024.0 / 1024.0, 2),

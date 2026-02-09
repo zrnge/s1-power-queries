@@ -11,7 +11,9 @@ ProcessEvents
     NetworkEvents
     | where TimeGenerated > ago(7d)
     | where RemotePort in (445, 135, 139, 3389, 5985, 5986)
+    | extend NetworkTime = TimeGenerated
 ) on DeviceName
+| where abs(datetime_diff('minute', TimeGenerated, NetworkTime)) <= 5
 | project TimeGenerated, DeviceName, AccountName, ProcessName, ProcessCommandLine, RemoteIP, RemotePort
 | summarize EventCount=count(), UniqueDestinations=dcount(RemoteIP) by DeviceName, AccountName, ProcessName
 | where UniqueDestinations > 3

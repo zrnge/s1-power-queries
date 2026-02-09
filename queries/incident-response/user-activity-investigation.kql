@@ -20,9 +20,11 @@ union ProcessEvents, NetworkEvents, FileEvents, RegistryEvents
     DeviceList=make_set(DeviceName),
     ProcessList=make_set(ProcessName)
     by AccountName
-| extend RiskIndicators = case(
-    UniqueDevices > 10, "Multiple Devices",
-    UniqueIPs > 50, "Multiple Remote Connections",
-    ""
+| extend RiskIndicators = strcat_array(
+    array_iff(
+        dynamic(["Multiple Devices", "Multiple Remote Connections"]),
+        dynamic([UniqueDevices > 10, UniqueIPs > 50])
+    ),
+    ", "
 )
 | project AccountName, TotalEvents, UniqueDevices, UniqueProcesses, UniqueIPs, FirstActivity, LastActivity, RiskIndicators, DeviceList, ProcessList

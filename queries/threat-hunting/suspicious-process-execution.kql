@@ -6,7 +6,7 @@
 ProcessEvents
 | where TimeGenerated > ago(24h)
 | where ProcessName has_any ("powershell.exe", "cmd.exe", "wscript.exe", "cscript.exe", "mshta.exe")
-| where ProcessCommandLine has_any ("hidden", "bypass", "encodedcommand", "downloadstring", "iex", "invoke-expression")
+| where ProcessCommandLine has_any ("hidden", "bypass", "encodedCommand", "downloadstring", "iex", "invoke-expression")
 | project TimeGenerated, DeviceName, AccountName, ProcessName, ProcessCommandLine, ParentProcessName
 | summarize Count=count(), FirstSeen=min(TimeGenerated), LastSeen=max(TimeGenerated) by DeviceName, AccountName, ProcessName, ProcessCommandLine
 | order by Count desc

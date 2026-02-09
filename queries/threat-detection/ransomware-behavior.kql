@@ -7,7 +7,7 @@ FileEvents
 | where TimeGenerated > ago(1h)
 | where ActionType in ("FileCreated", "FileModified", "FileRenamed")
 | where FileName endswith_any (".encrypted", ".locked", ".crypto", ".crypt", ".cerber", ".locky")
-    or FileName matches regex @".*\.(txt|html)$" and FileName has_any ("readme", "howto", "decrypt", "recover")
+    or (FileName endswith_any (".txt", ".html") and FileName has_any ("readme", "howto", "decrypt", "recover"))
 | summarize 
     EncryptedFiles=count(),
     UniqueExtensions=dcount(FileExtension),
