@@ -2,6 +2,12 @@
 
 Power Query collection for SentinelOne - KQL queries, data transformations, and analysis templates for security operations and threat hunting
 
+## Drops script and executable at startup location Detected
+```KQL
+tgt.file.path contains '\\Windows\\Start Menu\\Programs\\Startup' and tgt.file.extension in ('bat','cmd','dll','hta','jar','js','jse','msi','ps1','psd1','psm1','scr','url','vba','vbe','vbs','wsf','exe')
+|columns event.time,src.process.name ,tgt.file.path, endpoint.name 
+```
+
 ## Suspicious driver load detected
 ```KQL
 driver.loadVerdict = * and !(driver.loadVerdict = 'BENIGN') endpoint.name = * 
